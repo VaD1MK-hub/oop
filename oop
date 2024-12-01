@@ -1,0 +1,240 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class Main {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Транспортная система");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(600, 400);
+
+            JPanel contentPane = new JPanel(new BorderLayout());
+
+            JPanel routePanel = new JPanel(new GridLayout(2, 1));
+            JLabel routeLabel = new JLabel("Маршрут:");
+            JLabel routeInfoLabel = new JLabel();
+            routePanel.add(routeLabel);
+            routePanel.add(routeInfoLabel);
+
+            JPanel stationPanel = new JPanel(new GridLayout(2, 1));
+            JLabel stationLabel = new JLabel("Станции:");
+            JLabel stationInfoLabel = new JLabel();
+            stationPanel.add(stationLabel);
+            stationPanel.add(stationInfoLabel);
+
+            JPanel busPanel = new JPanel(new GridLayout(2, 1));
+            JLabel busLabel = new JLabel("Автобусы:");
+            JTextArea busInfoArea = new JTextArea();
+            busInfoArea.setEditable(false);
+            busPanel.add(busLabel);
+            busPanel.add(busInfoArea);
+
+            JButton updateButton = new JButton("Обновить");
+            updateButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Station station1 = new Station("Центральная");
+                    Station station2 = new Station("Вокзал");
+
+                    Bus bus1 = new Bus("A1", 2);  // Вместимость 2
+                    Bus bus2 = new Bus("B2", 3);  // Вместимость 3
+
+                    station1.addBus(bus1);
+                    station2.addBus(bus2);
+
+                    bus1.boardPassenger("Иван");
+                    bus1.boardPassenger("Мария");
+                    bus2.boardPassenger("Петр");
+
+                    bus1.boardPassenger("Анна");
+
+                    Route route = new Route("101");
+                    route.addStation(station1);
+                    route.addStation(station2);
+
+                    routeInfoLabel.setText(route.getRouteInfo());
+                    stationInfoLabel.setText("Станция " + station1.getInfo() + ":");
+                    busInfoArea.setText("");
+                    for (Bus bus : station1.getBuses()) {
+                        busInfoArea.append(bus.getVehicleInfo() + "\n");
+                    }
+                }
+            });
+
+            contentPane.add(routePanel, BorderLayout.NORTH);
+            contentPane.add(stationPanel, BorderLayout.CENTER);
+            contentPane.add(busPanel, BorderLayout.SOUTH);
+            contentPane.add(updateButton, BorderLayout.EAST);
+
+            frame.setContentPane(contentPane);
+            frame.setVisible(true);
+        });
+    }
+}
+
+public enum TransportType {
+    BUS("Автобус"),
+    TROLLEYBUS("Троллейбус"),
+    TRAM("Трамвай");
+
+    private final String name;
+
+    TransportType(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Bus extends Transport {
+    private List<String> passengers;
+
+    public Bus(String vehicleNumber, int capacity) {
+        super(vehicleNumber, capacity);
+        this.passengers = new ArrayList<>();
+    }
+
+    @Override
+    public void boardPassenger(String passenger) {
+        if (passengers.size() < capacity) {
+            passengers.add(passenger);
+            System.out.println("Пассажир " + passenger + " сел в автобус " + vehicleNumber + ".");
+        } else {
+            System.out.println("Автобус " + vehicleNumber + " переполнен! Не удалось посадить пассажира " + passenger);
+        }
+    }
+
+    @Override
+    public String getVehicleInfo() {
+        return super.getVehicleInfo() + ", Пассажиры: " + passengers.size();
+    }
+}
+
+
+public class Transport {
+    protected String vehicleNumber;
+    protected int capacity;
+
+    public Transport(String vehicleNumber, int capacity) {
+        this.vehicleNumber = vehicleNumber;
+        this.capacity = capacity;
+    }
+
+    public void boardPassenger(String passenger) {
+        System.out.println("Метод boardPassenger не реализован для " + vehicleNumber);
+    }
+
+    public String getVehicleInfo() {
+        return "Транспорт: " + vehicleNumber + ", Вместимость: " + capacity;
+    }
+}
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public class Station {
+    private String name;
+    private String address;
+
+    {
+        address = "г.Лебедянь";
+    }
+
+    private static String month;
+
+    {
+        month = "Сентябрь";
+    }
+
+    private List<Bus> buses;
+
+    public Station(String name) {
+        if (name == null || name.isEmpty()) {
+            System.out.println("Ошибка: название станции не может быть пустым!");
+            this.name = "Неизвестная станция";
+        } else {
+            this.name = name;
+        }
+        this.buses = new ArrayList<>();
+    }
+
+    public void addBus(Bus bus) {
+        buses.add(bus);
+    }
+
+    public List<Bus> getBuses() {
+        return buses;
+    }
+
+    public String getInfo() {
+        return "Станция: " + name + " (Адрес: " + address + ")";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Station other = (Station) obj;
+        return Objects.equals(name, other.name) &&
+                Objects.equals(address, other.address) &&
+                Objects.equals(buses, other.buses) &&
+                Objects.equals(month, other.month);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, address, buses, month);
+    }
+
+    public boolean equalsOnlyNameAndAddress(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Station other = (Station) obj;
+        return Objects.equals(name, other.name) &&
+                Objects.equals(address, other.address);
+    }
+
+    public int hashCodeOnlyNameAndAddress() {
+        return Objects.hash(name, address);
+    }
+}
+
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Route {
+    private String routeNumber;
+    private List<Station> stations;
+
+    public Route(String routeNumber) {
+        this.routeNumber = routeNumber;
+        this.stations = new ArrayList<>();
+    }
+
+    public void addStation(Station station) {
+        if (station != null) {
+            stations.add(station);
+        } else {
+            System.out.println("Ошибка: Невалидная станция!");
+        }
+    }
+
+    public String getRouteInfo() {
+        StringBuilder info = new StringBuilder("Маршрут " + routeNumber + ":");
+        for (Station station : stations) {
+            info.append("\n- ").append(station.getInfo());
+        }
+        return info.toString();
+    }
+}
